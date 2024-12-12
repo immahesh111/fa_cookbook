@@ -1,9 +1,14 @@
 import streamlit as st
 import pandas as pd
+import openpyxl
 
 st.set_page_config(page_title="Padget Error Code Analysis", page_icon="", layout="wide")
 
-df = pd.read_excel("Moto.xlsx")
+try:
+    df = pd.read_excel("Moto.xlsx")
+except Exception as e:
+    st.error(f"Error loading Excel file: {e}")
+
 
 # Display header
 st.markdown("""<h1 style="color:#002b50;">FA Cook Book</h1>""", unsafe_allow_html=True)
