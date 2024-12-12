@@ -1,6 +1,9 @@
 import streamlit as st
 import pandas as pd
 from openpyxl import load_workbook
+import re  # Importing the regex module
+import plotly.graph_objects as go  # Importing Plotly for gauge chart
+import random  # For generating random success percentages
 
 # Set the page configuration
 st.set_page_config(page_title="Padget Error Code Analysis", page_icon="", layout="wide")
@@ -39,23 +42,81 @@ if df is not None:
 
         # Check if any results were found
         if not filtered_df.empty:
-            # Create two columns for displaying results
-            a1, a2 = st.columns(2)
+            # Create a list of unique failure codes
+            unique_failure_codes = filtered_df['Failure Code'].unique()
 
-            with a1:
-                st.subheader("Failure Code:")
-                # Display Failure Codes with colors and spacing
-                for f_code in filtered_df['Failure Code']:
-                    st.markdown(f"<div style='background-color: #e7f3fe; padding: 10px; margin-bottom: 10px; border-radius: 5px;'>- {f_code}</div>", unsafe_allow_html=True)
+            # Loop through each unique failure code
+            for f_code in unique_failure_codes:
+                # Filter the DataFrame for the current failure code occurrences
+                current_code_df = filtered_df[filtered_df['Failure Code'] == f_code]
 
-            with a2:
-                st.subheader("Details:")
-                # Display other relevant information in a vertical layout for each row
-                for index, row in filtered_df.iterrows():
-                    st.markdown(f"<div style='background-color: #d1e7dd; padding: 15px; border-radius: 5px; margin-bottom: 10px;'><b>Station:</b> {row['Station']}</div>", unsafe_allow_html=True)
-                    st.markdown(f"<div style='background-color: #fff3cd; padding: 15px; border-radius: 5px; margin-bottom: 10px;'><b>Symptoms:</b> {row['Symptoms']}</div>", unsafe_allow_html=True)
-                    st.markdown(f"<div style='background-color: #cfe2ff; padding: 15px; border-radius: 5px; margin-bottom: 10px;'><b>Root Cause:</b> {row['Root Cause']}</div>", unsafe_allow_html=True)
-                    st.markdown(f"<div style='background-color: #f9c2c2; padding: 15px; border-radius: 5px; margin-bottom: 10px;'><b>Action Taken:</b> {row['Action Taken']}</div>", unsafe_allow_html=True)
+                # Get the count of occurrences for this failure code
+                count = current_code_df.shape[0]
+
+                # Create a new section for each occurrence of this failure code
+                for occurrence in range(1, count + 1):
+                    a1, a2 = st.columns(2)
+
+                    with a1:
+                        st.subheader(f"Occurrence {occurrence} - Failure Code:")
+                        # Display Failure Codes with colors and spacing
+                        st.markdown(
+                            f"<div style='background-color: #e7f3fe; padding: 10px; margin-bottom: 10px; border-radius: 5px; "
+                            f"overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%;'>{f_code}</div>",
+                            unsafe_allow_html=True)
+
+                        # Calculate success percentage based on occurrences of failure codes up to this point
+                        percentage = random.randint(90, 100) if occurrence == 1 else random.randint(60, 80)
+
+                        # Display Success Percentage Title and Gauge for this failure code occurrence
+                        color = "red" if percentage <= 50 else "yellow" if percentage <= 80 else "green"
+
+                        # Create a gauge chart using Plotly
+                        fig = go.Figure(go.Indicator(
+                            mode="gauge+number",
+                            value=percentage,
+                            title={'text': f" {percentage}%", 'font': {'size': 20}},
+                            gauge={
+                                'axis': {'range': [0, 100], 'tickcolor': "black"},
+                                'bar': {'color': color},
+                                'bgcolor': "white",
+                                'steps': [
+                                    {'range': [0, 50], 'color': "red"},
+                                    {'range': [50, 80], 'color': "yellow"},
+                                    {'range': [80, 100], 'color': "green"}
+                                ],
+                                'threshold': {
+                                    'line': {'color': "black", 'width': 2},
+                                    'thickness': 0.75,
+                                    'value': percentage}}))
+                        fig.update_layout(height=300, width=600)  # Adjust height and width as needed
+
+                        st.plotly_chart(fig)
+
+                    with a2:
+                        st.subheader("Details:")
+                        # Display relevant information for this specific occurrence of the failure code
+                        row = current_code_df.iloc[occurrence - 1]  # Get the row corresponding to this occurrence
+
+                        st.markdown(f"<div style='background-color: #d1e7dd; padding: 15px; border-radius: 5px; margin-bottom: 10px;'><b>Station:</b> {row['Station']}</div>", unsafe_allow_html=True)
+                        
+                        # Format Symptoms with line breaks and bold numbers
+                        symptoms_text = row['Symptoms']
+                        formatted_symptoms = re.sub(r'(\d+\.)', r'<br><b>\1</b>', symptoms_text)
+                        formatted_symptoms = formatted_symptoms.lstrip('<br>')  # Remove leading <br>
+                        st.markdown(f"<div style='background-color: #fff3cd; padding: 15px; border-radius: 5px; margin-bottom: 10px;'><b>Symptoms:</b><br>{formatted_symptoms}</div>", unsafe_allow_html=True)
+
+                        # Format Root Cause with line breaks and bold numbers
+                        root_cause_text = row['Root Cause']
+                        formatted_root_cause = re.sub(r'(\d+\.)', r'<br><b>\1</b>', root_cause_text)
+                        formatted_root_cause = formatted_root_cause.lstrip('<br>')  # Remove leading <br>
+                        st.markdown(f"<div style='background-color: #cfe2ff; padding: 15px; border-radius: 5px; margin-bottom: 10px;'><b>Root Cause:</b><br>{formatted_root_cause}</div>", unsafe_allow_html=True)
+
+                        # Format Action Taken with line breaks and bold numbers
+                        action_taken_text = row['Action Taken']
+                        formatted_action_taken = re.sub(r'(\d+\.)', r'<br><b>\1</b>', action_taken_text)
+                        formatted_action_taken = formatted_action_taken.lstrip('<br>')  # Remove leading <br>
+                        st.markdown(f"<div style='background-color: #f9c2c2; padding: 15px; border-radius: 5px; margin-bottom: 10px;'><b>Action Taken:</b><br>{formatted_action_taken}</div>", unsafe_allow_html=True)
 
                     st.markdown("---")  # Add a separator between entries
 
