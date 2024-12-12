@@ -75,7 +75,7 @@ if df is not None:
                         fig = go.Figure(go.Indicator(
                             mode="gauge+number",
                             value=percentage,
-                            title={'text': f" {percentage}%", 'font': {'size': 20}},
+                            title={'text': f"Success Rate : {percentage}%", 'font': {'size': 20}},
                             gauge={
                                 'axis': {'range': [0, 100], 'tickcolor': "black"},
                                 'bar': {'color': color},
