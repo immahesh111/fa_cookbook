@@ -71,25 +71,30 @@ if df is not None:
                         # Display Success Percentage Title and Gauge for this failure code occurrence
                         color = "red" if percentage <= 50 else "yellow" if percentage <= 80 else "green"
 
-                        # Create a gauge chart using Plotly with full color representation
-                        fig = go.Figure(go.Indicator(
-                            mode="gauge+number",
-                            value=percentage,
-                            title={'text': f"Success Rate : {percentage}%", 'font': {'size': 20}},
-                            gauge={
-                                'axis': {'range': [0, 100], 'tickcolor': "black"},
-                                'bar': {'color': color},
-                                'bgcolor': "white",
-                                'steps': [],
-                                'threshold': {
-                                    'line': {'color': "black", 'width': 2},
-                                    'thickness': 0.75,
-                                    'value': percentage}}))
-                        
-                        fig.update_layout(height=300, width=600)  # Adjust height and width as needed
+                         # Create a semi-circular donut chart using Plotly
+                        fig = go.Figure()
+
+                        fig.add_trace(go.Pie(
+                            values=[percentage, 100 - percentage],
+                            labels=["Success", "Remaining"],
+                            hole=0.5,
+                            rotation=90,
+                            marker=dict(colors=[color, 'lightgray']),
+                            textinfo='label+percent',
+                            textfont_size=20,
+                            hoverinfo='label+percent'
+                        ))
+
+                        fig.update_layout(
+                            title_text=f"Success Rate : {percentage}%",
+                            title_font_size=24,
+                            height=300,
+                            width=600,
+                            showlegend=False,
+                            annotations=[dict(text=f"{percentage}%", x=0.5, y=0.5, font_size=30, showarrow=False)]
+                        )
 
                         st.plotly_chart(fig)
-
                     with a2:
                         st.subheader("Details:")
                         # Display relevant information for this specific occurrence of the failure code
