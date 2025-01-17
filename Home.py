@@ -4,6 +4,7 @@ from openpyxl import load_workbook
 import re  # Importing the regex module
 import plotly.graph_objects as go  # Importing Plotly for gauge chart
 import random  # For generating random success percentages
+import numpy as np
 
 # Set the page configuration
 st.set_page_config(page_title="Padget Error Code Analysis", page_icon="", layout="wide")
@@ -66,35 +67,68 @@ if df is not None:
                             unsafe_allow_html=True)
 
                         # Calculate success percentage based on occurrences of failure codes up to this point
-                        percentage = random.randint(90, 100) if occurrence == 1 else random.randint(60, 80)
+                        current_value = random.randint(90, 100) if occurrence == 1 else random.randint(60, 80)
 
                         # Display Success Percentage Title and Gauge for this failure code occurrence
-                        color = "red" if percentage <= 50 else "yellow" if percentage <= 80 else "green"
+                        #current_value=80
+                        plot_bgcolor = "#ffffff" 
+                        quadrant_colors = [plot_bgcolor, "#2bad4e", "#85e043", "#eff229", "#f2a529", "#f25829"] 
+                        quadrant_text = ["", "<b>Very high</b>", "<b>High</b>", "<b>Medium</b>", "<b>Low</b>", "<b>Very low</b>"]
+                        n_quadrants = len(quadrant_colors) - 1
 
-                         # Create a semi-circular donut chart using Plotly
-                        fig = go.Figure()
+                        min_value = 0
+                        max_value = 100
+                        hand_length = np.sqrt(2) / 4
+                        hand_angle = np.pi * (1 - (max(min_value, min(max_value, current_value)) - min_value) / (max_value - min_value))
 
-                        fig.add_trace(go.Pie(
-                            values=[percentage, 100 - percentage],
-                            labels=["Success", "Remaining"],
-                            hole=0.5,
-                            rotation=90,
-                            marker=dict(colors=[color, 'lightgray']),
-                            textinfo='label+percent',
-                            textfont_size=20,
-                            hoverinfo='label+percent'
-                        ))
-
-                        fig.update_layout(
-                            title_text=f"Success Rate : {percentage}%",
-                            title_font_size=24,
-                            height=300,
-                            width=600,
-                            showlegend=False,
-                            annotations=[dict(text=f"{percentage}%", x=0.5, y=0.5, font_size=30, showarrow=False)]
+                        fig = go.Figure(
+                            data=[
+                                go.Pie(
+                                    values=[0.5] + (np.ones(n_quadrants) / 2 / n_quadrants).tolist(),
+                                    rotation=90,
+                                    hole=0.5,
+                                    marker_colors=quadrant_colors,
+                                    text=quadrant_text,
+                                    textinfo="text",
+                                    hoverinfo="skip",
+                                ),
+                            ],
+                            layout=go.Layout(
+                                showlegend=False,
+                                margin=dict(b=0,t=10,l=10,r=10),
+                                width=450,
+                                height=450,
+                                paper_bgcolor=plot_bgcolor,
+                                annotations=[
+                                    go.layout.Annotation(
+                                        text=f"<b>Success Rate:</b><br>{current_value} %",
+                                        x=0.5, xanchor="center", xref="paper",
+                                        y=0.25, yanchor="bottom", yref="paper",
+                                        showarrow=False,
+                                        font=dict(size=24, color='black')
+                                    )
+                                ],
+                                shapes=[
+                                    go.layout.Shape(
+                                        type="circle",
+                                        x0=0.48, x1=0.52,
+                                        y0=0.48, y1=0.52,
+                                        fillcolor="#333",
+                                        line_color="#333",
+                                    ),
+                                    go.layout.Shape(
+                                        type="line",
+                                        x0=0.5, x1=0.5 + hand_length * np.cos(hand_angle),
+                                        y0=0.5, y1=0.5 + hand_length * np.sin(hand_angle),
+                                        line=dict(color="#333", width=4)
+                                    )
+                                ]
+                            )
                         )
 
+                        # Display the figure in the Streamlit app instead of opening a new tab
                         st.plotly_chart(fig)
+
                     with a2:
                         st.subheader("Details:")
                         # Display relevant information for this specific occurrence of the failure code
