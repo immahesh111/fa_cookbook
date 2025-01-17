@@ -71,7 +71,7 @@ if df is not None:
                         # Display Success Percentage Title and Gauge for this failure code occurrence
                         color = "red" if percentage <= 50 else "yellow" if percentage <= 80 else "green"
 
-                        # Create a gauge chart using Plotly
+                        # Create a gauge chart using Plotly with full color representation
                         fig = go.Figure(go.Indicator(
                             mode="gauge+number",
                             value=percentage,
@@ -80,15 +80,12 @@ if df is not None:
                                 'axis': {'range': [0, 100], 'tickcolor': "black"},
                                 'bar': {'color': color},
                                 'bgcolor': "white",
-                                'steps': [
-                                    {'range': [0, 50], 'color': "red"},
-                                    {'range': [50, 80], 'color': "yellow"},
-                                    {'range': [80, 100], 'color': "green"}
-                                ],
+                                'steps': [],
                                 'threshold': {
                                     'line': {'color': "black", 'width': 2},
                                     'thickness': 0.75,
                                     'value': percentage}}))
+                        
                         fig.update_layout(height=300, width=600)  # Adjust height and width as needed
 
                         st.plotly_chart(fig)
